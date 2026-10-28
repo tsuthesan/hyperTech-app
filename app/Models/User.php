@@ -24,6 +24,13 @@ class User extends Authenticatable
         'password',
     ];
 
+    public const ROLES = [
+        'admin',
+        'cashier',
+        'accountant',
+        'guest'
+    ];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -44,6 +51,12 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => 'string',
         ];
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
     }
 }
