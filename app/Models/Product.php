@@ -25,6 +25,10 @@ class Product extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'cost_price' => 'decimal:2',
+        'selling_price' => 'decimal:2',
+        'stock_quantity' => 'integer',
+        'min_stock_quantity' => 'integer',
         'last_price_updated_at' => 'datetime',
     ];
 
@@ -44,6 +48,10 @@ class Product extends Model
     public function priceHistories()
     {
         return $this->hasMany(PriceHistory::class);
+    }
+
+    public function isLowStock(){
+        return $this->stock_quantity <= $this->min_stock_quantity;
     }
 
     public function quotationItems()

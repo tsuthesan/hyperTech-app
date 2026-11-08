@@ -11,7 +11,7 @@ class StockTransaction extends Model
         'type',
         'quantity',
         'unit_price',
-        'notes',
+        'note',
         'created_by',
     ];
 
