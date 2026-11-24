@@ -9,6 +9,7 @@ use App\Models\StockTransaction;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
@@ -36,14 +37,12 @@ class ProductController extends Controller
         }
 
         $sortOptions = [
-                        'name',
-                        'product_code',
-                        'category',
-                        'supplier',
-                        'cost_price',
-                        'selling_price',
-                        'stock_quantity',
-                        'created_at',
+            'name',
+            'product_code',
+            'cost_price',
+            'selling_price',
+            'stock_quantity',
+            'created_at',
         ];
         $sort = $request->query('sort', 'name');
         $direction = $request->query('direction', 'asc');
@@ -78,71 +77,87 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(Request $request)
     {
         $data = $request->validate([
-            'product_code' => 'required|string|max:255|unique:products,product_code',
-            'name' => 'required|string|max:255',
-            'category_id' => 'nullable|exists:categories,id',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'description' => 'nullable|string',
-            'unit' => 'nullable|string|max:50',
-            'cost_price' => 'required|numeric|min:0',
-            'selling_price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
-            'min_stock_quantity' => 'nullable|integer|min:0',
-            'is_active' => 'boolean|nullable',
+            'name' => ['required', 'string', 'max:255'],
+            'category_id' => ['nullable', 'exists:categories,id'],
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'description' => ['nullable', 'string'],
+            'unit' => ['required', 'string', 'max:50'],
+            'cost_price' => ['required', 'numeric', 'min:0'],
+            'selling_price' => ['required', 'numeric', 'min:0'],
+            'stock_quantity' => ['required', 'integer', 'min:0'],
+            'min_stock_quantity' => ['nullable', 'integer', 'min:0'],
+            'is_active' => ['nullable', 'boolean'],
         ]);
 
         if ((float) $data['selling_price'] < (float) $data['cost_price']) {
             return back()
                 ->withInput()
                 ->withErrors([
-                    'selling_price' => 'Selling price cannot be less than cost price.'
+                    'selling_price' => 'Selling price cannot be less than cost price.',
                 ]);
         }
 
+        $openingStock = (int) $data['stock_quantity'];
+
         $data['is_active'] = $request->boolean('is_active');
 
-        DB::transaction(function() use ($data) {
-            $openingStock = (int)$data['stock_quantity'];
+        $product = DB::transaction(function () use ($data, $openingStock) {
 
-            // Create initial stock transaction
+            // Generate a temporary unique product code.
             $product = Product::create([
-                'product_code' => $data['product_code'],
+                'product_code' => 'TEMP-' . Str::uuid(),
                 'name' => $data['name'],
                 'category_id' => $data['category_id'] ?? null,
                 'supplier_id' => $data['supplier_id'] ?? null,
                 'description' => $data['description'] ?? null,
-                'unit' => $data['unit'] ?? null,
+                'unit' => $data['unit'],
                 'cost_price' => $data['cost_price'],
                 'selling_price' => $data['selling_price'],
-                'stock_quantity' => 0, // Set to 0 initially
+                'stock_quantity' => 0,
                 'min_stock_quantity' => $data['min_stock_quantity'] ?? 0,
-                'is_active' => (bool)($data['is_active'] ?? true),
+                'is_active' => $data['is_active'],
                 'last_price_updated_at' => now(),
             ]);
-            // Record opening stock through the stock ledger.
-                if($openingStock > 0){
-                    $product->stock_quantity = $openingStock;
-                    $product->save();
 
-                    StockTransaction::create([
-                        'product_id' => $product->id,
-                        'type' => 'stock_in',
-                        'quantity' => $openingStock,
-                        'unit_price' => $product->cost_price,
-                        'note' => 'Opening stock ',
-                        'created_by' => auth()->id(),
-                    ]);
+            // Generate permanent product code using ID.
+            $product->product_code = 'PRD' .
+                str_pad($product->id, 6, '0', STR_PAD_LEFT);
 
-                }
+            $product->qr_code = $product->product_code;
 
+            $product->save();
+
+            // Record opening stock.
+            if ($openingStock > 0) {
+
+                $product->stock_quantity = $openingStock;
+                $product->save();
+
+                StockTransaction::create([
+                    'product_id' => $product->id,
+                    'type' => 'stock_in',
+                    'quantity' => $openingStock,
+                    'unit_price' => $product->cost_price,
+                    'note' => 'Opening stock',
+                    'created_by' => auth()->id(),
+                ]);
+            }
+
+            return $product;
         });
-                return redirect()
-                    ->route('products.index')
-                    ->with('success', 'Product created successfully.');
+
+        return redirect()
+            ->route('products.index')
+            ->with(
+                'success',
+                'Product created successfully. Code: ' . $product->product_code
+            );
     }
+
 
     /**
      * Display the specified resource.
@@ -166,31 +181,32 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
+
     public function update(Request $request, Product $product)
     {
-        $data =$request->validate([
-            'product_code' => ['required','string','max:255',Rule::unique('products','product_code')->ignore($product->id)],
-            'name' => 'required|string|max:255',
-            'category_id' => 'nullable|exists:categories,id',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'description' => 'nullable|string',
-            'unit' => 'nullable|string|max:50',
-            'cost_price' => 'required|numeric|min:0',
-            'selling_price' => 'required|numeric|min:0',
-            'min_stock_quantity' => 'nullable|integer|min:0',
-            'is_active' => 'boolean|nullable',
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'category_id' => ['nullable', 'exists:categories,id'],
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'description' => ['nullable', 'string'],
+            'unit' => ['required', 'string', 'max:50'],
+            'cost_price' => ['required', 'numeric', 'min:0'],
+            'selling_price' => ['required', 'numeric', 'min:0'],
+            'min_stock_quantity' => ['nullable', 'integer', 'min:0'],
+            'is_active' => ['nullable', 'boolean'],
         ]);
 
         if ((float) $data['selling_price'] < (float) $data['cost_price']) {
             return back()
                 ->withInput()
                 ->withErrors([
-                    'selling_price' =>
-                        'Selling price is below cost price. Confirm this is intentional before saving.',
+                    'selling_price' => 'Selling price is below cost price. Confirm this is intentional before saving.',
                 ]);
         }
+        $data['is_active'] = $request->boolean('is_active');
 
         DB::transaction(function () use ($data, $product) {
+
             $product = Product::whereKey($product->id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -199,10 +215,11 @@ class ProductController extends Controller
             $newPrice = (float) $data['selling_price'];
 
             if (round($oldPrice, 2) !== round($newPrice, 2)) {
+
                 PriceHistory::create([
                     'product_id' => $product->id,
-                    'old_price' => $product->selling_price,
-                    'new_price' => $data['selling_price'],
+                    'old_price' => $oldPrice,
+                    'new_price' => $newPrice,
                     'updated_by' => auth()->id(),
                     'updated_at_price' => now(),
                 ]);
@@ -210,9 +227,8 @@ class ProductController extends Controller
                 $data['last_price_updated_at'] = now();
             }
 
-            $data['is_active'] = (bool) ($data['is_active'] ?? false);
 
-            // Stock is intentionally excluded from this edit form.
+            // Do not change product code or stock quantity.
             $product->fill($data);
             $product->save();
         });
@@ -220,25 +236,44 @@ class ProductController extends Controller
         return redirect()
             ->route('products.index')
             ->with('success', 'Product updated successfully.');
-
-
     }
 
-    public function storecategory(Request $request)
+
+
+    public function storeCategory(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
-            'code' => 'required|string|max:100|unique:categories,code',
-
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:categories,name',
+            ],
         ]);
 
-        $category = Category::create($data);
+        $category = DB::transaction(function () use ($data) {
+
+            $category = Category::create([
+                'name' => $data['name'],
+                'code' => 'TEMP-' . Str::uuid(),
+            ]);
+
+            $category->code = 'CAT' .
+                str_pad($category->id, 6, '0', STR_PAD_LEFT);
+
+            $category->save();
+
+            return $category;
+        });
 
         return response()->json([
             'id' => $category->id,
             'name' => $category->name,
+            'code' => $category->code,
+            'message' => 'Category created successfully.',
         ], 201);
     }
+
 
     public function storeSupplier(Request $request)
     {
@@ -253,6 +288,7 @@ class ProductController extends Controller
 
         return response()->json([
             'id' => $supplier->id,
+        'message' => 'Supplier created successfully.',
             'name' => $supplier->name,
         ], 201);
     }
