@@ -21,8 +21,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $permissions = [
             // Dashboard
-            'dashboard.view',
-
+//            'dashboard.view',
+//
             // User and authorization management
             'users.view',
             'users.create',
@@ -54,6 +54,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
             // Payments and accounts
             'payments.view',
+            'payments.edit',
+            'payments.delete',
             'payments.record',
             'payments.refund',
             'accounts.view',

@@ -28,8 +28,36 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
-    }
+        $user = $request->user();
+
+        if ($user->hasRole('admin')) {
+            return redirect()->intended('/dashboard');
+        }
+        if ($user->hasRole('cashier')) {
+            return redirect()->intended('/pos');
+        }
+
+        if ($user->hasRole('accountant')) {
+            return redirect()->intended('/reports/financial');
+        }
+
+        if ($user->hasRole('inventory staff')) {
+            return redirect()->intended('/inventory');
+        }
+
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('login')
+            ->withErrors([
+                'email' => 'Your account does not have an assigned staff role.',
+            ]);
+
+
+        }
 
     /**
      * Destroy an authenticated session.

@@ -12,8 +12,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
-    use HasRoles;
+    use HasFactory, Notifiable,HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -27,11 +26,11 @@ class User extends Authenticatable
         'role',
     ];
 
-    public const ROLES = [
+    const ROLES = [
         'admin',
         'cashier',
         'accountant',
-        'guest'
+        'guest',
     ];
 
     /**
@@ -54,12 +53,12 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'role' => 'string',
+            //'role' => 'string',
         ];
     }
 
-    public function hasRole(string $role): bool
-    {
-        return $this->role === $role;
-    }
+//    public function hasRole(string $role): bool
+//    {
+//        return $this->role === $role;
+//    }
 }
