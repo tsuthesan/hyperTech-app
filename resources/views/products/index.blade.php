@@ -1,3 +1,4 @@
+@extends('layouts.app')
 
 <!DOCTYPE html>
 <html lang="en">
@@ -20,7 +21,7 @@
 
         @can('products.create')
         <a href="{{ route('products.create') }}"
-           class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white">
+           class="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white">
             + Add Product
         </a>
         @endcan
