@@ -8,8 +8,9 @@ class InvoicePayment extends Model
 {
     protected $fillable = [
         'invoice_id',
+        'receipt_no',
         'amount',
-        'payment_date',
+//        'payment_date',
         'payment_method',
         'reference',
         'notes',
@@ -20,6 +21,7 @@ class InvoicePayment extends Model
     protected $casts = [
         'paid_at' => 'datetime',
         'amount' => 'decimal:2',
+        'payment_date' => 'date',
     ];
 
     public function invoice()

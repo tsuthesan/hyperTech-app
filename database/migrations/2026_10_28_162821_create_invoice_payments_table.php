@@ -17,7 +17,7 @@ return new class extends Migration
             $table->decimal('amount', 12, 2);
             $table->date('paid_at');
             $table->string('payment_method',30)->default('cash');
-            $table->string('payment_reference')->nullable();
+            $table->string('reference')->nullable();
             $table->text('notes')->nullable();
             $table->foreignId('received_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
