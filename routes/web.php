@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -175,6 +177,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payments/{payment}/receipt/pdf',
         [InvoiceController::class, 'paymentReceiptPdf']
     )->name('payments.receipt.pdf');
+
+    Route::resource('suppliers',SupplierController::class);
+    Route::resource('categories',CategoryController::class);
 
 });
 
