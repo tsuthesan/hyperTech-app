@@ -20,6 +20,8 @@ class Invoice extends Model
         'print_status',
         'invoice_pdf',
         'created_by',
+        'tax',
+        'payment_method',
     ];
 
     protected $casts = [
@@ -41,13 +43,13 @@ class Invoice extends Model
         return $this->hasMany(InvoiceItem::class);
     }
 
-    public function user(){
+    public function creator(){
         return $this->belongsTo(User::class,'created_by');
     }
 
     public function payments()
     {
-        return $this->hasMany(InvoicePayment::class);
+        return $this->hasMany(InvoicePayment::class)->orderBy('paid_at');
     }
 
 }
