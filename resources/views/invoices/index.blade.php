@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('content')
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="py-2">
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <!-- Header -->
             <div class="flex flex-col sm:flex-row justify-between gap-4 mb-6">
@@ -15,8 +15,8 @@
                 </div>
 
                 <a href="{{ route('invoices.create') }}"
-                   class="inline-flex items-center justify-center px-3 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-900">
-                    + Create Invoice
+                   class="inline-flex items-center justify-center px-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-900">
+                    Create Invoice
                 </a>
             </div>
 

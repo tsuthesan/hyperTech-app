@@ -1,14 +1,6 @@
 @extends('layouts.app')
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Products | Hyper Tech Solutions</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+@section('content')
 <body class="min-h-screen bg-slate-100">
 <main class="mx-auto max-w-7xl p-6">
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -71,7 +63,7 @@
                 <th class="p-4">Code</th>
                 <th class="p-4">Product</th>
                 <th class="p-4">Category</th>
-                <th class="p-4">Cost</th>
+                <th class="p-4">Cost Price</th>
                 <th class="p-4">Selling Price</th>
                 <th class="p-4">Stock</th>
                 <th class="p-4">Status</th>
@@ -91,7 +83,7 @@
                     {{ number_format((float) $product->selling_price, 2) }}
                 </td>
                 <td class="p-4">
-                        <span class="{{ $product->isLowStock() ? 'text-red-600 font-semibold' : 'text-slate-700' }}">
+                        <span class="{{ $product->isLowStock() ? 'text-red-600 font-semibold' : 'text-green-700 font-semibold' }}">
                             {{ $product->stock_quantity }} {{ $product->unit }}
                         </span>
                     @if ($product->isLowStock())
@@ -124,4 +116,4 @@
     <div class="mt-5">{{ $products->links() }}</div>
 </main>
 </body>
-</html>
+@endsection
