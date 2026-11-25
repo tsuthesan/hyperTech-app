@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PosController;
@@ -24,9 +25,11 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-Route::middleware(['auth'])->group(function () {
-    Route::view('/dashboard', 'dashboard')
+Route::middleware(['auth', 'permission:dashboard.view'])->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
 });
 
 Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(function () {
@@ -146,7 +149,20 @@ Route::middleware(['auth'])->group(function () {
 
 
 Route::middleware(['auth'])->group(function () {
-    Route::resource('invoices', InvoiceController::class);
+//    Route::resource('invoices', InvoiceController::class);
+    Route::get('/invoices', [InvoiceController::class, 'index'])
+        ->name('invoices.index');
+
+    Route::post('/invoices', [InvoiceController::class, 'store'])
+        ->name('invoices.store');
+
+    Route::get('/invoices/create', [InvoiceController::class, 'create'])
+        ->name('invoices.create')->middleware('permission:invoices.create');
+
+    Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])
+        ->middleware('permission:invoices.edit')
+        ->name('invoices.edit');
+
 
 
     Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])

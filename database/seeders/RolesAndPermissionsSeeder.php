@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -10,19 +9,22 @@ use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $guard = 'web';
 
+        /*
+        |--------------------------------------------------------------------------
+        | Permissions
+        |--------------------------------------------------------------------------
+        */
+
         $permissions = [
             // Dashboard
-//            'dashboard.view',
-//
+            'dashboard.view',
+
             // User and authorization management
             'users.view',
             'users.create',
@@ -35,8 +37,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'products.create',
             'products.edit',
             'products.delete',
+
             'categories.manage',
             'suppliers.manage',
+
             'stock.view',
             'stock.receive',
             'stock.adjust',
@@ -45,11 +49,18 @@ class RolesAndPermissionsSeeder extends Seeder
             'customers.view',
             'customers.create',
             'customers.edit',
+
             'pos.access',
+
             'sales.create',
             'sales.view',
             'sales.cancel',
+
+            // Invoices
             'invoices.view',
+            'invoices.create',
+            'invoices.edit',
+            'invoices.delete',
             'invoices.print',
 
             // Payments and accounts
@@ -58,7 +69,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'payments.delete',
             'payments.record',
             'payments.refund',
+
             'accounts.view',
+
+            // Reports
             'reports.sales',
             'reports.financial',
             'reports.inventory',
@@ -71,65 +85,131 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::findOrCreate($permission, $guard);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Roles and Permissions
+        |--------------------------------------------------------------------------
+        */
+
         $rolePermissions = [
+
+            /*
+            |--------------------------------------------------------------------------
+            | ADMIN
+            |--------------------------------------------------------------------------
+            */
+
             'admin' => $permissions,
+
+            /*
+            |--------------------------------------------------------------------------
+            | CASHIER
+            |--------------------------------------------------------------------------
+            */
 
             'cashier' => [
                 'dashboard.view',
+
                 'products.view',
+
                 'customers.view',
                 'customers.create',
                 'customers.edit',
+
                 'pos.access',
+
                 'sales.create',
                 'sales.view',
+
                 'invoices.view',
+                'invoices.create',
                 'invoices.print',
+
                 'payments.view',
                 'payments.record',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | ACCOUNTANT
+            |--------------------------------------------------------------------------
+            */
+
             'accountant' => [
                 'dashboard.view',
+
                 'customers.view',
                 'products.view',
+
                 'stock.view',
+
                 'sales.view',
+
+                // Invoice management
                 'invoices.view',
+                'invoices.create',
+                'invoices.edit',
+                'invoices.print',
+
+                // Payment management
                 'payments.view',
                 'payments.record',
+                'payments.edit',
+
+                // Accounts
                 'accounts.view',
+
+                // Financial reports
                 'reports.sales',
                 'reports.financial',
                 'reports.inventory',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | INVENTORY STAFF
+            |--------------------------------------------------------------------------
+            */
+
             'inventory staff' => [
                 'dashboard.view',
+
                 'products.view',
                 'products.create',
                 'products.edit',
+
                 'categories.manage',
                 'suppliers.manage',
+
                 'stock.view',
                 'stock.receive',
                 'stock.adjust',
+
                 'reports.inventory',
             ],
 
-            'guest' => [
-                'dashboard.view',
-                'products.view',
-            ],
+            /*
+            |--------------------------------------------------------------------------
+            | GUEST
+            |--------------------------------------------------------------------------
+            */
+
+            'guest' => [],
         ];
 
+        /*
+        |--------------------------------------------------------------------------
+        | Create Roles and Assign Permissions
+        |--------------------------------------------------------------------------
+        */
+
         foreach ($rolePermissions as $roleName => $rolePermissionNames) {
+
             $role = Role::findOrCreate($roleName, $guard);
+
             $role->syncPermissions($rolePermissionNames);
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
-
-
 }
